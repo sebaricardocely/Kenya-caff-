@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kenya Café | Punto de Venta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --cafe-premium: #3d2b1f;
+            --cafe-claro: #6f4e37;
+            --dorado: #d4a373;
+            --crema-fondo: #fdfaf7;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--crema-fondo);
+            color: #2b2b2b;
+        }
+
+        .navbar { 
+            background: var(--cafe-premium);
+            border-bottom: 4px solid var(--dorado);
+            padding: 1.2rem;
+        }
+
+        .navbar-brand {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 2px;
+            font-size: 1.6rem;
+        }
+
+        /* Tarjetas Estilo Boutique */
+        .card-producto {
+            border: none;
+            border-radius: 25px;
+            background: #ffffff;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .card-producto:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px rgba(61, 43, 31, 0.12);
+        }
+
+        .icon-box {
+            background: #f8f1eb;
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: var(--cafe-claro);
+            font-size: 2rem;
+        }
+
+        .price-badge {
+            background: var(--crema-fondo);
+            color: var(--cafe-premium);
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: inline-block;
+        }
+
+        .btn-vender {
+            background: var(--cafe-claro);
+            color: white;
+            border-radius: 15px;
+            font-weight: 600;
+            padding: 12px;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-vender:hover {
+            background: var(--cafe-premium);
+            transform: scale(1.02);
+            color: white;
+        }
+
+        /* Historial Lateral */
+        .sidebar-historial {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            border-left: 5px solid var(--dorado);
+        }
+
+        .venta-item {
+            border-left: 3px solid var(--dorado);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark mb-5 shadow">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+    <img src="{% static 'img/logokenya.png' %}" alt="Logo Kenya Café" style="height: 60px; width: auto; margin-right: 12px;">
+    <span style="font-family: 'Playfair Display', serif; font-weight: bold;">KENYA CAFfÉ</span>
+</a>
+        <div class="d-flex align-items-center">
+            <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-4">Panel de Control</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold">Productos disponibles</h3>
+                <span class="text-muted">Mostrando {{ productos.count }} productos</span>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4">
+                    <i class="bi bi-check2-all me-2"></i> {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row g-4">
+                {% for p in productos %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 card-producto p-3 text-center">
+                        <div class="card-body">
+                            <div class="icon-box">
+                                <i class="bi bi-cup-hot"></i>
+                            </div>
+                            <h5 class="fw-bold mb-1">{{ p.nombre }}</h5>
+                            <p class="text-muted small mb-3">{{ p.categoria.nombre|upper }}</p>
+                            
+                            <div class="mb-4">
+                                <span class="price-badge">$ {{ p.precio|floatformat:0 }}</span>
+                            </div>
+
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="producto_id" value="{{ p.id }}">
+                                <button type="submit" class="btn btn-vender w-100" {% if p.stock <= 0 %}disabled{% endif %}>
+                                    {% if p.stock > 0 %}VENDER AHORA{% else %}SIN STOCK{% endif %}
+                                </button>
+                            </form>
+                            <div class="mt-2">
+                                <small class="{% if p.stock < 5 %}text-danger{% else %}text-muted{% endif %}">
+                                    Disponibles: {{ p.stock }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sidebar-historial shadow-sm">
+                <h5 class="fw-bold mb-4"><i class="bi bi-lightning-charge me-2"></i>Ventas Recientes</h5>
+                
+                {% for v in ultimas_ventas %}
+                <div class="venta-item">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Ticket #{{ v.id }}</span>
+                        <span class="text-success fw-bold">${{ v.total|floatformat:0 }}</span>
+                    </div>
+                    <small class="text-muted">{{ v.fecha|date:"d/m - H:i" }}</small>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    Aún no hay ventas
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
