@@ -35,7 +35,6 @@
             font-size: 1.6rem;
         }
 
-        /* Tarjetas Estilo Boutique */
         .card-producto {
             border: none;
             border-radius: 25px;
@@ -88,18 +87,53 @@
             color: white;
         }
 
-        /* Historial Lateral */
         .sidebar-historial {
             background: white;
             border-radius: 25px;
-            padding: 25px;
-            border-left: 5px solid var(--dorado);
+            padding: 20px;
+            border: 2px solid var(--dorado);
+            position: sticky;
+            top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            max-height: 85vh;
+            overflow-y: auto;
         }
 
         .venta-item {
             border-left: 3px solid var(--dorado);
             padding-left: 15px;
             margin-bottom: 15px;
+        }
+
+        /* Estilos del Modal */
+        .modal-content {
+            background-color: var(--crema-fondo);
+            border-radius: 30px !important;
+            border: none;
+        }
+
+        .modal-header {
+            background: var(--cafe-premium) !important;
+            color: white;
+            border-bottom: 3px solid var(--dorado);
+            border-radius: 30px 30px 0 0 !important;
+        }
+
+        .ticket-recibo {
+            font-family: 'Courier New', Courier, monospace;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px dashed var(--dorado);
+        }
+
+        .btn-carrito-flotante {
+            background: var(--cafe-premium) !important;
+            border: 2px solid var(--dorado) !important;
+            color: white !important;
+            width: 65px;
+            height: 65px;
+            z-index: 1050;
         }
     </style>
 </head>
@@ -108,9 +142,9 @@
 <nav class="navbar navbar-dark mb-5 shadow">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="#">
-    <img src="{% static 'img/logokenya.png' %}" alt="Logo Kenya Café" style="height: 60px; width: auto; margin-right: 12px;">
-    <span style="font-family: 'Playfair Display', serif; font-weight: bold;">KENYA CAFfÉ</span>
-</a>
+            <img src="{% static 'img/logokenya.png' %}" alt="Logo Kenya Café" style="height: 60px; width: auto; margin-right: 12px;">
+            <span style="font-family: 'Playfair Display', serif; font-weight: bold;">KENYA CAFFÉ</span>
+        </a>
         <div class="d-flex align-items-center">
             <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-4">Panel de Control</a>
         </div>
@@ -118,8 +152,9 @@
 </nav>
 
 <div class="container pb-5">
-    <div class="row g-5">
-        <div class="col-lg-8">
+    <div class="row g-4">
+        
+        <div class="col-lg-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold">Productos disponibles</h3>
                 <span class="text-muted">Mostrando {{ productos.count }} productos</span>
@@ -133,30 +168,32 @@
                 {% endfor %}
             {% endif %}
 
-            <div class="row g-4">
+            <div class="row g-3"> 
                 {% for p in productos %}
-                <div class="col-md-6 col-xl-4">
+                <div class="col-md-6 col-lg-4 col-xl-3">
                     <div class="card h-100 card-producto p-3 text-center">
                         <div class="card-body">
                             <div class="icon-box">
-                                <i class="bi bi-cup-hot"></i>
+                                {% if p.categoria.nombre == 'Bebidas calientes' %}<i class="bi bi-cup-hot"></i>
+                                {% elif p.categoria.nombre == 'Bebidas frias' %}<i class="bi bi-cup-straw"></i>
+                                {% elif p.categoria.nombre == 'Sandwiches' %}<i class="bi bi-egg-fried"></i>
+                                {% elif p.categoria.nombre == 'Vinos' %}<i class="bi bi-glass-hr"></i>
+                                {% elif p.categoria.nombre == 'Licores' %}<i class="bi bi-wine"></i>
+                                {% elif p.categoria.nombre == 'Acompañantes' %}<i class="bi bi-cake"></i>
+                                {% else %}<i class="bi bi-bag-heart"></i>{% endif %}     
                             </div>
-                            <h5 class="fw-bold mb-1">{{ p.nombre }}</h5>
+                            <h5 class="fw-bold mb-1" style="font-size: 0.95rem;">{{ p.nombre }}</h5>
                             <p class="text-muted small mb-3">{{ p.categoria.nombre|upper }}</p>
-                            
-                            <div class="mb-4">
-                                <span class="price-badge">$ {{ p.precio|floatformat:0 }}</span>
+                            <div class="mb-3">
+                                <span class="price-badge" style="font-size: 0.85rem;">$ {{ p.precio|floatformat:0 }}</span>
                             </div>
-
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="producto_id" value="{{ p.id }}">
-                                <button type="submit" class="btn btn-vender w-100" {% if p.stock <= 0 %}disabled{% endif %}>
-                                    {% if p.stock > 0 %}VENDER AHORA{% else %}SIN STOCK{% endif %}
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-vender w-100 btn-agregar-carrito" 
+                                    data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio }}"
+                                    {% if p.stock <= 0 %}disabled{% endif %} style="font-size: 0.75rem;">
+                                {% if p.stock > 0 %}AGREGAR AL PEDIDO{% else %}SIN STOCK{% endif %}
+                            </button>
                             <div class="mt-2">
-                                <small class="{% if p.stock < 5 %}text-danger{% else %}text-muted{% endif %}">
+                                <small style="font-size: 0.7rem;" class="{% if p.stock < 5 %}text-danger{% else %}text-muted{% endif %}">
                                     Disponibles: {{ p.stock }}
                                 </small>
                             </div>
@@ -167,29 +204,181 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-3">
             <div class="sidebar-historial shadow-sm">
-                <h5 class="fw-bold mb-4"><i class="bi bi-lightning-charge me-2"></i>Ventas Recientes</h5>
-                
-                {% for v in ultimas_ventas %}
-                <div class="venta-item">
-                    <div class="d-flex justify-content-between">
-                        <span class="fw-bold">Ticket #{{ v.id }}</span>
-                        <span class="text-success fw-bold">${{ v.total|floatformat:0 }}</span>
+                <h6 class="fw-bold mb-4 text-center"><i class="bi bi-cart-check me-2"></i>Pedido Actual</h6>
+                <div id="carritoLateral">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-cart d-block mb-2 fs-2"></i> Carrito vacío
                     </div>
-                    <small class="text-muted">{{ v.fecha|date:"d/m - H:i" }}</small>
                 </div>
-                {% empty %}
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                    Aún no hay ventas
+                <div id="resumenLateral" style="display: none;">
+                    <hr class="my-3 opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold">Total:</span>
+                        <span class="h5 fw-bold text-success mb-0" id="totalLateral">$0</span>
+                    </div>
+                    <button type="button" class="btn btn-warning w-100 fw-bold rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#ticketModal">
+                        VER TICKET / COBRAR
+                    </button>
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ticketModalLabel"><i class="bi bi-receipt me-2"></i>Ticket de Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="contenidoTicket">
+                    <p class="text-muted text-center italic">El carrito está vacío...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cerrar</button>
+                <form action="{% url 'index' %}" method="POST" id="formConfirmarVenta">
+                    {% csrf_token %}
+                    <input type="hidden" name="items_pedido" id="itemsPedidoInput">
+                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4">Confirmar y Cobrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="button" class="btn btn-carrito-flotante position-fixed bottom-0 end-0 m-4 shadow-lg rounded-pill" 
+        data-bs-toggle="modal" data-bs-target="#ticketModal">
+    <i class="bi bi-cart4 fs-3"></i>
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" id="contadorCarrito">0</span>
+</button>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let carrito = [];
+    const contenedorTicket = document.getElementById('contenidoTicket');
+    const contadorCarrito = document.getElementById('contadorCarrito');
+    const inputItems = document.getElementById('itemsPedidoInput');
+
+    // 1. Agregar con lógica de agrupación
+    document.querySelectorAll('.btn-agregar-carrito').forEach(boton => {
+        boton.addEventListener('click', () => {
+            const id = boton.getAttribute('data-id');
+            const nombre = boton.getAttribute('data-nombre');
+            const precio = parseFloat(boton.getAttribute('data-precio'));
+
+            // Buscar si el producto ya está en el carrito
+            const productoExistente = carrito.find(item => item.id === id);
+
+            if (productoExistente) {
+                productoExistente.cantidad += 1;
+            } else {
+                carrito.push({
+                    id: id,
+                    nombre: nombre,
+                    precio: precio,
+                    cantidad: 1
+                });
+            }
+            
+            actualizarInterfaz();
+        });
+    });
+
+    // 2. Eliminar o reducir cantidad
+    function eliminarDelCarrito(id) {
+        const index = carrito.findIndex(item => item.id === id);
+        if (index !== -1) {
+            if (carrito[index].cantidad > 1) {
+                carrito[index].cantidad -= 1;
+            } else {
+                carrito.splice(index, 1);
+            }
+        }
+        actualizarInterfaz();
+    }
+
+    // 3. Renderizar cambios agrupados
+    function actualizarInterfaz() {
+        const carritoLateral = document.getElementById('carritoLateral');
+        const resumenLateral = document.getElementById('resumenLateral');
+        const totalLateral = document.getElementById('totalLateral');
+        
+        // El contador ahora suma todas las cantidades individuales
+        const totalProductos = carrito.reduce((acc, item) => acc + item.cantidad, 0);
+        contadorCarrito.innerText = totalProductos;
+
+        if (carrito.length === 0) {
+            carritoLateral.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-cart fs-1 d-block mb-2"></i>Carrito vacío</div>`;
+            resumenLateral.style.display = 'none';
+            contenedorTicket.innerHTML = '<p class="text-muted text-center">El carrito está vacío...</p>';
+            inputItems.value = "";
+            return;
+        }
+
+        let htmlLateral = "";
+        let htmlModal = '<div class="ticket-recibo shadow-sm p-3 bg-white rounded-3">';
+        let totalGeneral = 0;
+
+        carrito.forEach((item) => {
+            const subtotal = item.precio * item.cantidad;
+            totalGeneral += subtotal;
+
+            // HTML Barra Lateral (Más compacto)
+            htmlLateral += `
+                <div class="venta-item mb-2" style="border-left: 3px solid #d4a373; padding-left: 10px;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div style="max-width: 65%;">
+                            <span class="fw-bold d-block" style="font-size: 0.85rem;">
+                                <span class="badge bg-secondary me-1">${item.cantidad}x</span> ${item.nombre}
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-success fw-bold d-block" style="font-size: 0.8rem;">$${subtotal.toLocaleString()}</span>
+                            <button onclick="eliminarDelCarrito('${item.id}')" class="btn p-0 text-danger border-0" style="font-size: 0.65rem;">Quitar</button>
+                        </div>
+                    </div>
+                </div>`;
+
+            // HTML Modal (Diseño de recibo real)
+            htmlModal += `
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2 fw-bold text-muted" style="min-width: 30px;">${item.cantidad}</span>
+                        <span class="fw-bold" style="color: #3d2b1f;">${item.nombre}</span>
+                    </div>
+                    <span class="fw-bold">$${subtotal.toLocaleString()}</span>
+                </div>`;
+        });
+
+        htmlModal += `
+            <div class="d-flex justify-content-between mt-4">
+                <span class="fw-bold h4">TOTAL</span>
+                <span class="fw-bold h4 text-success">$${totalGeneral.toLocaleString()}</span>
+            </div>
+        </div>`;
+
+        carritoLateral.innerHTML = htmlLateral;
+        resumenLateral.style.display = 'block';
+        totalLateral.innerText = `$${totalGeneral.toLocaleString()}`;
+        contenedorTicket.innerHTML = htmlModal;
+        
+        // Importante para Django: enviamos la lista completa de IDs según la cantidad
+        // Ejemplo: si hay 2 cafés con ID 5, el array tendrá [5, 5]
+        const listaIds = [];
+        carrito.forEach(item => {
+            for(let i=0; i < item.cantidad; i++) {
+                listaIds.push(item.id);
+            }
+        });
+        inputItems.value = JSON.stringify(listaIds);
+    }
+</script>
+
 </body>
 </html>
