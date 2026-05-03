@@ -174,7 +174,7 @@
                 <i class="bi bi-search"></i>
                 </span>
                 <input type="text" id="buscador" class="form-control border-start-0 rounded-pill-end" 
-               placeholder="Buscar por nombre o código (ej: 06)...">
+               placeholder="Buscar por nombre o código...">
                 </div>
             </div>
 
@@ -239,7 +239,7 @@
                         <span class="h5 fw-bold text-success mb-0" id="totalLateral">$0</span>
                     </div>
                     <button type="button" class="btn btn-warning w-100 fw-bold rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#ticketModal">
-                        VER TICKET / COBRAR
+                        VER TICKET 
                     </button>
                 </div>
             </div>
@@ -310,7 +310,7 @@
         });
     });
 
-    // 2. Eliminar o reducir cantidad
+    //  Eliminar o reducir cantidad
     function eliminarDelCarrito(id) {
         const index = carrito.findIndex(item => item.id === id);
         if (index !== -1) {
@@ -323,7 +323,7 @@
         actualizarInterfaz();
     }
 
-    // 3. Renderizar cambios agrupados
+    //  Renderizar cambios agrupados
     function actualizarInterfaz() {
         const carritoLateral = document.getElementById('carritoLateral');
         const resumenLateral = document.getElementById('resumenLateral');
@@ -349,7 +349,7 @@
             const subtotal = item.precio * item.cantidad;
             totalGeneral += subtotal;
 
-            // HTML Barra Lateral (Más compacto)
+            // HTML Barra Lateral 
             htmlLateral += `
                 <div class="venta-item mb-2" style="border-left: 3px solid #d4a373; padding-left: 10px;">
                     <div class="d-flex justify-content-between align-items-center">
@@ -365,7 +365,7 @@
                     </div>
                 </div>`;
 
-            // HTML Modal (Diseño de recibo real)
+            //  Diseño de recibo real
             htmlModal += `
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
                     <div class="d-flex align-items-center">
@@ -388,8 +388,8 @@
         totalLateral.innerText = `$${totalGeneral.toLocaleString()}`;
         contenedorTicket.innerHTML = htmlModal;
         
-        // Importante para Django: enviamos la lista completa de IDs según la cantidad
-        // Ejemplo: si hay 2 cafés con ID 5, el array tendrá [5, 5]
+        //  Se envpia la lista completa de IDs según la cantidad
+     
         const listaIds = [];
         carrito.forEach(item => {
             for(let i=0; i < item.cantidad; i++) {
@@ -417,7 +417,7 @@
             }
 
             if (elementoCodigo) {
-                // Limpiamos el texto "Cod:" para comparar solo el valor
+                // Se busca limpiar el texto para comparar solo el valor
                 const valorCodigo = elementoCodigo.innerText.toLowerCase().replace('cod:', '').trim();
                 coincideCodigo = valorCodigo.includes(busqueda);
             }
