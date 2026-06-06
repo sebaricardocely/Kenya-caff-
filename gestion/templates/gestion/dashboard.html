@@ -1,0 +1,87 @@
+{{ dias_labels|json_script:"dias-labels-data" }}
+    {{ dias_totales|json_script:"dias-totales-data" }}
+    {{ prod_labels|json_script:"prod-labels-data" }}
+    {{ prod_cantidades|json_script:"prod-cantidades-data" }}
+    {{ meses_labels|json_script:"meses-labels-data" }}
+    {{ meses_totales|json_script:"meses-totales-data" }}
+
+    <script>
+        // Capturar los datos de forma segura usando JSON.parse desde las etiquetas generadas
+        const diasLabels = JSON.parse(document.getElementById('dias-labels-data').textContent);
+        const diasTotales = JSON.parse(document.getElementById('dias-totales-data').textContent);
+        const prodLabels = JSON.parse(document.getElementById('prod-labels-data').textContent);
+        const prodCantidades = JSON.parse(document.getElementById('prod-cantidades-data').textContent);
+        const mesesLabels = JSON.parse(document.getElementById('meses-labels-data').textContent);
+        const mesesTotales = JSON.parse(document.getElementById('meses-totales-data').textContent);
+
+        // Configuración de Colores Corporativos (Kenya Caffé)
+        const colorPrincipal = '#6f4e37'; 
+        const colorSecundario = '#a1887f'; 
+        const colorDetalle = '#d7ccc8'; 
+
+        // 1. Gráfico Semanal (Líneas)
+        new Chart(document.getElementById('graficoSemanales').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: diasLabels,
+                datasets: [{
+                    label: 'Ingresos por Día ($)',
+                    data: diasTotales,
+                    borderColor: colorPrincipal,
+                    backgroundColor: 'rgba(111, 78, 55, 0.08)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
+            }
+        });
+
+        // 2. Gráfico de Productos (Barras Horizontales)
+        new Chart(document.getElementById('graficoProductos').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: prodLabels,
+                datasets: [{
+                    label: 'Unidades Despachadas',
+                    data: prodCantidades,
+                    backgroundColor: [colorPrincipal, colorSecundario, '#bcaaa4', '#eee5de', '#f5f5f5'],
+                    borderRadius: 4
+                }]
+            },
+            options: { 
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: { display: false } // Ocultar leyenda repetitiva para barras multicolores
+                }
+            }
+        });
+
+        // 3. Gráfico Mensual (Barras Verticales)
+        new Chart(document.getElementById('graficoMensuales').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: mesesLabels,
+                datasets: [{
+                    label: 'Recaudación Mensual ($)',
+                    data: mesesTotales,
+                    backgroundColor: colorSecundario,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

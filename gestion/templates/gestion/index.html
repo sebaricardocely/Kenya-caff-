@@ -145,8 +145,8 @@
             <img src="{% static 'img/logokenya.png' %}" alt="Logo Kenya Café" style="height: 60px; width: auto; margin-right: 12px;">
             <span style="font-family: 'Playfair Display', serif; font-weight: bold;">KENYA CAFFÉ</span>
         </a>
-        <div class="d-flex align-items-center">
-            <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-4">Panel de Control</a>
+        <div class="d-flex align-items-center shadow-sm">
+            <a href="{% url 'dashboard_ventas' %}" class="btn btn-outline-light btn-sm rounded-pill px-4">Panel de Control</a>
         </div>
     </div>
 </nav>
@@ -162,28 +162,25 @@
 
             {% if messages %}
                 {% for message in messages %}
-                <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4">
+                <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 alert-dismissible fade show" role="alert">
                     <i class="bi bi-check2-all me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 {% endfor %}
             {% endif %}
 
             <div class="mb-4">
                 <div class="input-group">
-                <span class="input-group-text bg-white border-end-0 rounded-pill-start">
-                <i class="bi bi-search"></i>
-                </span>
-                <input type="text" id="buscador" class="form-control border-start-0 rounded-pill-end" 
-               placeholder="Buscar por nombre o código...">
+                    <span class="input-group-text bg-white border-end-0 rounded-pill-start">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="buscador" class="form-control border-start-0 rounded-pill-end" placeholder="Buscar por nombre o código...">
                 </div>
             </div>
 
-
-
-
-            <div class="row g-3"> 
+            <div class="row g-3" id="contenedorProductos"> 
                 {% for p in productos %}
-                <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="col-md-6 col-lg-4 col-xl-3 item-producto">
                     <div class="card h-100 card-producto p-3 text-center">
                         <div class="card-body">
                             <div class="icon-box">
@@ -196,12 +193,12 @@
                                 {% else %}<i class="bi bi-bag-heart"></i>{% endif %}     
                             </div>
                             <h5 class="fw-bold mb-1 nombre-producto" style="font-size: 0.95rem;">{{ p.nombre }}</h5>
-                                <p class="text-muted small mb-3 text-uppercase">
+                            <p class="text-muted small mb-3 text-uppercase">
                                 {{ p.categoria.nombre }}
-                            <br>
-                            <span class="codigo-valor" style="color: var(--cafe-claro); font-weight: 600; font-size: 0.75rem;">
-                            Cod: {{ p.codigo|default:"---" }}
-                            </span>
+                                <br>
+                                <span class="codigo-valor" style="color: var(--cafe-claro); font-weight: 600; font-size: 0.75rem;">
+                                    Cod: <span class="cod-texto">{{ p.codigo|default:"---" }}</span>
+                                </span>
                             </p>
                             
                             <div class="mb-3">
@@ -254,19 +251,54 @@
                 <h5 class="modal-title" id="ticketModalLabel"><i class="bi bi-receipt me-2"></i>Ticket de Venta</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <div id="contenidoTicket">
-                    <p class="text-muted text-center italic">El carrito está vacío...</p>
+            
+            <form action="{% url 'index' %}" method="POST" id="formConfirmarVenta">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div id="contenidoTicket">
+                        <p class="text-muted text-center italic">El carrito está vacío...</p>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-white rounded-3 border">
+                        <label for="metodo_pago" class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago:</label>
+                        <select class="form-select border-2 rounded-3" name="metodo_pago" id="metodo_pago" required>
+                            <option value="EF" selected>💵 Efectivo </option>
+                            <option value="TJ">💳 Tarjeta de Crédito / Débito</option>
+                            <option value="TR">📱 Transferencia (Nequi / Daviplata)</option>
+                        </select>
+                    </div>
+
+                    <div id="seccion-qrs" class="mt-3 p-3 bg-white rounded-3 border text-center" style="display: none; background-color: #f8f9fa !important;">
+                        <span class="fw-bold small text-muted text-uppercase d-block mb-3"><i class="bi bi-qr-code-scan me-1"></i> Escanea para pagar</span>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2 border rounded-3 bg-white h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <span class="badge mb-2" style="background-color: #330033; color: white; font-size: 0.7rem;">NEQUI</span>
+                                    </div>
+                                    <img src="{% static 'img/qr_nequi.jpeg' %}" alt="QR Nequi" class="img-fluid rounded mx-auto shadow-sm" style="max-height: 140px; width: auto; object-fit: contain;">
+                                    <small class="d-block text-muted mt-2 fw-bold" style="font-size: 0.75rem;">Cel: 3133926154</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 border rounded-3 bg-white h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <span class="badge bg-danger mb-2" style="font-size: 0.7rem;">DAVIPLATA</span>
+                                    </div>
+                                    <img src="{% static 'img/qr_daviplata.jpeg' %}" alt="QR Daviplata" class="img-fluid rounded mx-auto shadow-sm" style="max-height: 140px; width: auto; object-fit: contain;">
+                                    <small class="d-block text-muted mt-2 fw-bold" style="font-size: 0.75rem;">Cel: 3133926154</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cerrar</button>
-                <form action="{% url 'index' %}" method="POST" id="formConfirmarVenta">
-                    {% csrf_token %}
+                
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cerrar</button>
                     <input type="hidden" name="items_pedido" id="itemsPedidoInput">
-                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4">Confirmar y Cobrar</button>
-                </form>
-            </div>
+                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm">Confirmar y Cobrar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -285,14 +317,13 @@
     const contadorCarrito = document.getElementById('contadorCarrito');
     const inputItems = document.getElementById('itemsPedidoInput');
 
-    // 1. Agregar con lógica de agrupación
+    // 1. Agregar productos controlando duplicaciones
     document.querySelectorAll('.btn-agregar-carrito').forEach(boton => {
         boton.addEventListener('click', () => {
             const id = boton.getAttribute('data-id');
             const nombre = boton.getAttribute('data-nombre');
             const precio = parseFloat(boton.getAttribute('data-precio'));
 
-            // Buscar si el producto ya está en el carrito
             const productoExistente = carrito.find(item => item.id === id);
 
             if (productoExistente) {
@@ -305,12 +336,11 @@
                     cantidad: 1
                 });
             }
-            
             actualizarInterfaz();
         });
     });
 
-    //  Eliminar o reducir cantidad
+    // 2. Restar cantidades o remover del carrito
     function eliminarDelCarrito(id) {
         const index = carrito.findIndex(item => item.id === id);
         if (index !== -1) {
@@ -323,13 +353,12 @@
         actualizarInterfaz();
     }
 
-    //  Renderizar cambios agrupados
+    // 3. Sincronizar y redibujar componentes del DOM
     function actualizarInterfaz() {
         const carritoLateral = document.getElementById('carritoLateral');
         const resumenLateral = document.getElementById('resumenLateral');
         const totalLateral = document.getElementById('totalLateral');
         
-        // El contador ahora suma todas las cantidades individuales
         const totalProductos = carrito.reduce((acc, item) => acc + item.cantidad, 0);
         contadorCarrito.innerText = totalProductos;
 
@@ -349,7 +378,6 @@
             const subtotal = item.precio * item.cantidad;
             totalGeneral += subtotal;
 
-            // HTML Barra Lateral 
             htmlLateral += `
                 <div class="venta-item mb-2" style="border-left: 3px solid #d4a373; padding-left: 10px;">
                     <div class="d-flex justify-content-between align-items-center">
@@ -360,16 +388,15 @@
                         </div>
                         <div class="text-end">
                             <span class="text-success fw-bold d-block" style="font-size: 0.8rem;">$${subtotal.toLocaleString()}</span>
-                            <button onclick="eliminarDelCarrito('${item.id}')" class="btn p-0 text-danger border-0" style="font-size: 0.65rem;">Quitar</button>
+                            <button type="button" onclick="eliminarDelCarrito('${item.id}')" class="btn p-0 text-danger border-0" style="font-size: 0.65rem;">Quitar</button>
                         </div>
                     </div>
                 </div>`;
 
-            //  Diseño de recibo real
             htmlModal += `
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
                     <div class="d-flex align-items-center">
-                        <span class="me-2 fw-bold text-muted" style="min-width: 30px;">${item.cantidad}</span>
+                        <span class="me-2 fw-bold text-muted" style="min-width: 30px;">${item.cantidad}x</span>
                         <span class="fw-bold" style="color: #3d2b1f;">${item.nombre}</span>
                     </div>
                     <span class="fw-bold">$${subtotal.toLocaleString()}</span>
@@ -378,59 +405,51 @@
 
         htmlModal += `
             <div class="d-flex justify-content-between mt-4">
-                <span class="fw-bold h4">TOTAL</span>
-                <span class="fw-bold h4 text-success">$${totalGeneral.toLocaleString()}</span>
+                <span class="fw-bold h5">TOTAL</span>
+                <span class="fw-bold h5 text-success">$${totalGeneral.toLocaleString()}</span>
             </div>
         </div>`;
 
         carritoLateral.innerHTML = htmlLateral;
-        resumenLateral.style.display = 'block';
-        totalLateral.innerText = `$${totalGeneral.toLocaleString()}`;
         contenedorTicket.innerHTML = htmlModal;
         
-        //  Se envpia la lista completa de IDs según la cantidad
-     
-        const listaIds = [];
-        carrito.forEach(item => {
-            for(let i=0; i < item.cantidad; i++) {
-                listaIds.push(item.id);
-            }
-        });
-        inputItems.value = JSON.stringify(listaIds);
+        resumenLateral.style.display = 'block';
+        totalLateral.innerText = `$${totalGeneral.toLocaleString()}`;
+
+        inputItems.value = JSON.stringify(carrito);
     }
 
+    // 4. Filtrar productos mediante barra de búsqueda
     document.getElementById('buscador').addEventListener('input', function(e) {
-        const busqueda = e.target.value.toLowerCase().trim();
-        const tarjetas = document.querySelectorAll('.card-producto');
+        const termino = e.target.value.toLowerCase().trim();
+        const productos = document.querySelectorAll('.item-producto');
 
-        tarjetas.forEach(tarjeta => {
-            // Extraemos los dos datos que nos interesan
-            const elementoNombre = tarjeta.querySelector('h5');
-            const elementoCodigo = tarjeta.querySelector('.codigo-valor');
-            const columna = tarjeta.closest('.col-md-6, .col-lg-4, .col-xl-3'); 
-            
-            let coincideNombre = false;
-            let coincideCodigo = false;
+        productos.forEach(producto => {
+            const nombre = producto.querySelector('.nombre-producto').innerText.toLowerCase();
+            const codigo = producto.querySelector('.cod-texto').innerText.toLowerCase();
 
-            if (elementoNombre) {
-                coincideNombre = elementoNombre.innerText.toLowerCase().includes(busqueda);
-            }
-
-            if (elementoCodigo) {
-                // Se busca limpiar el texto para comparar solo el valor
-                const valorCodigo = elementoCodigo.innerText.toLowerCase().replace('cod:', '').trim();
-                coincideCodigo = valorCodigo.includes(busqueda);
-            }
-
-            // Si coincide en cualquiera de los dos, o si la búsqueda está vacía
-            if (busqueda === "" || coincideNombre || coincideCodigo) {
-                columna.style.display = 'block';
+            if (nombre.includes(termino) || codigo.includes(termino)) {
+                producto.style.setProperty('display', '', 'important');
             } else {
-                columna.style.display = 'none';
+                producto.style.setProperty('display', 'none', 'important');
             }
         });
     });
-</script>
 
+    // 5. Mostrar/Ocultar QR de acuerdo al método seleccionado
+    document.getElementById('metodo_pago').addEventListener('change', function() {
+        const seccionQRs = document.getElementById('seccion-qrs');
+        if (this.value === 'TR') {
+            seccionQRs.style.display = 'block';
+        } else {
+            seccionQRs.style.display = 'none';
+        }
+    });
+
+    document.getElementById('ticketModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('metodo_pago').value = 'EF';
+        document.getElementById('seccion-qrs').style.display = 'none';
+    });
+</script>
 </body>
 </html>

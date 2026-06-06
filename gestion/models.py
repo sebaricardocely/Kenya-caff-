@@ -29,9 +29,11 @@ class Producto(models.Model):
         return f"[{self.codigo}] {self.nombre} - ${self.precio}" if self.codigo else f"{self.nombre} - ${self.precio}"
 
 class Venta(models.Model):
+    # ACTUALIZADO: Añadimos la opción 'QR' para los pagos con código escaneable
     METODOS_PAGO = [
         ('EF', 'Efectivo'),
-        ('TR', 'Transferencia (Nequi/Daviplata)'),
+        ('QR', 'Código QR (Nequi/Daviplata/Bancolombia)'),
+        ('TR', 'Transferencia Directa'),
         ('TD', 'Tarjeta'),
     ]
     fecha = models.DateTimeField(auto_now_add=True)
