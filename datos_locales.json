@@ -3,7 +3,7 @@
     "model": "gestion.categoria",
     "pk": 1,
     "fields": {
-        "nombre": "Acompañantes"
+        "nombre": "Acompanantes"
     }
 },
 {
@@ -118,7 +118,7 @@
     "pk": 7,
     "fields": {
         "codigo": "46",
-        "nombre": "Porción de papa chip",
+        "nombre": "Porcion de papa chip",
         "precio": "2500.00",
         "stock": 0,
         "categoria": 6,
@@ -166,7 +166,7 @@
     "pk": 11,
     "fields": {
         "codigo": "50",
-        "nombre": "Porción de queso",
+        "nombre": "Porcion de queso",
         "precio": "3000.00",
         "stock": 43,
         "categoria": 1,
@@ -298,7 +298,7 @@
     "pk": 22,
     "fields": {
         "codigo": "61",
-        "nombre": "Génova con limón",
+        "nombre": "Genova con limon",
         "precio": "3000.00",
         "stock": 0,
         "categoria": 1,
@@ -358,7 +358,7 @@
     "pk": 27,
     "fields": {
         "codigo": "24",
-        "nombre": "Granizado de café",
+        "nombre": "Granizado de cafe",
         "precio": "8000.00",
         "stock": 50,
         "categoria": 2,
@@ -382,7 +382,7 @@
     "pk": 29,
     "fields": {
         "codigo": "26",
-        "nombre": "Té en botella",
+        "nombre": "Te en botella",
         "precio": "3000.00",
         "stock": 0,
         "categoria": 2,
@@ -586,7 +586,7 @@
     "pk": 46,
     "fields": {
         "codigo": "05",
-        "nombre": "Café en leche - Latte - Té lipton",
+        "nombre": "Cafe en leche - Latte - Te lipton",
         "precio": "3000.00",
         "stock": 100,
         "categoria": 3,
@@ -670,7 +670,7 @@
     "pk": 53,
     "fields": {
         "codigo": "13",
-        "nombre": "Té Chai",
+        "nombre": "Te Chai",
         "precio": "6000.00",
         "stock": 45,
         "categoria": 3,
@@ -706,7 +706,7 @@
     "pk": 56,
     "fields": {
         "codigo": "16",
-        "nombre": "Libra de café amor perfecto",
+        "nombre": "Libra de cafe amor perfecto",
         "precio": "43000.00",
         "stock": 30,
         "categoria": 3,
