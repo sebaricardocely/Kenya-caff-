@@ -29,12 +29,6 @@
             padding: 1.2rem;
         }
 
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
-            letter-spacing: 2px;
-            font-size: 1.6rem;
-        }
-
         .card-producto {
             border: none;
             border-radius: 25px;
@@ -105,7 +99,6 @@
             margin-bottom: 15px;
         }
 
-        /* Estilos del Modal */
         .modal-content {
             background-color: var(--crema-fondo);
             border-radius: 30px !important;
@@ -140,13 +133,22 @@
 <body>
 
 <nav class="navbar navbar-dark mb-5 shadow">
-    <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="#">
+    <div class="container d-flex flex-wrap align-items-center justify-content-between">
+        <a class="navbar-brand d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none" href="{% url 'index' %}">
             <img src="{% static 'img/logokenya.png' %}" alt="Logo Kenya Café" style="height: 60px; width: auto; margin-right: 12px;">
-            <span style="font-family: 'Playfair Display', serif; font-weight: bold;">KENYA CAFFÉ</span>
+            <span style="font-family: 'Playfair Display', serif; font-weight: bold; letter-spacing: 2px; font-size: 1.6rem;">KENYA CAFFÉ</span>
         </a>
-        <div class="d-flex align-items-center shadow-sm">
-            <a href="{% url 'dashboard_ventas' %}" class="btn btn-outline-light btn-sm rounded-pill px-4">Panel de Control</a>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'dashboard_ventas' %}" class="btn btn-sm px-4 text-white rounded-pill border-2 fw-semibold" 
+               style="background-color: var(--dorado); border-color: var(--dorado); transition: 0.2s;">
+                <i class="bi bi-bar-chart-line-fill me-1"></i> Panel de Control
+            </a>
+            
+            <a href="/admin/" target="_blank" class="btn btn-sm px-4 text-white rounded-pill border-2" 
+               style="background-color: transparent; border-color: #ffffff; font-weight: 500; opacity: 0.9;">
+                <i class="bi bi-gear-fill me-1"></i> Administrar Catálogo
+            </a>
         </div>
     </div>
 </nav>
@@ -317,7 +319,6 @@
     const contadorCarrito = document.getElementById('contadorCarrito');
     const inputItems = document.getElementById('itemsPedidoInput');
 
-    // 1. Agregar productos controlando duplicaciones
     document.querySelectorAll('.btn-agregar-carrito').forEach(boton => {
         boton.addEventListener('click', () => {
             const id = boton.getAttribute('data-id');
@@ -340,7 +341,6 @@
         });
     });
 
-    // 2. Restar cantidades o remover del carrito
     function eliminarDelCarrito(id) {
         const index = carrito.findIndex(item => item.id === id);
         if (index !== -1) {
@@ -353,7 +353,6 @@
         actualizarInterfaz();
     }
 
-    // 3. Sincronizar y redibujar componentes del DOM
     function actualizarInterfaz() {
         const carritoLateral = document.getElementById('carritoLateral');
         const resumenLateral = document.getElementById('resumenLateral');
@@ -419,7 +418,6 @@
         inputItems.value = JSON.stringify(carrito);
     }
 
-    // 4. Filtrar productos mediante barra de búsqueda
     document.getElementById('buscador').addEventListener('input', function(e) {
         const termino = e.target.value.toLowerCase().trim();
         const productos = document.querySelectorAll('.item-producto');
@@ -436,7 +434,6 @@
         });
     });
 
-    // 5. Mostrar/Ocultar QR de acuerdo al método seleccionado
     document.getElementById('metodo_pago').addEventListener('change', function() {
         const seccionQRs = document.getElementById('seccion-qrs');
         if (this.value === 'TR') {

@@ -1,87 +1,253 @@
-{{ dias_labels|json_script:"dias-labels-data" }}
-    {{ dias_totales|json_script:"dias-totales-data" }}
-    {{ prod_labels|json_script:"prod-labels-data" }}
-    {{ prod_cantidades|json_script:"prod-cantidades-data" }}
-    {{ meses_labels|json_script:"meses-labels-data" }}
-    {{ meses_totales|json_script:"meses-totales-data" }}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kenya Café | Panel de Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --cafe-premium: #3d2b1f;
+            --cafe-claro: #6f4e37;
+            --dorado: #d4a373;
+            --crema-fondo: #fdfaf7;
+        }
 
-    <script>
-        // Capturar los datos de forma segura usando JSON.parse desde las etiquetas generadas
-        const diasLabels = JSON.parse(document.getElementById('dias-labels-data').textContent);
-        const diasTotales = JSON.parse(document.getElementById('dias-totales-data').textContent);
-        const prodLabels = JSON.parse(document.getElementById('prod-labels-data').textContent);
-        const prodCantidades = JSON.parse(document.getElementById('prod-cantidades-data').textContent);
-        const mesesLabels = JSON.parse(document.getElementById('meses-labels-data').textContent);
-        const mesesTotales = JSON.parse(document.getElementById('meses-totales-data').textContent);
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--crema-fondo);
+            color: #2b2b2b;
+        }
 
-        // Configuración de Colores Corporativos (Kenya Caffé)
-        const colorPrincipal = '#6f4e37'; 
-        const colorSecundario = '#a1887f'; 
-        const colorDetalle = '#d7ccc8'; 
+        .navbar { 
+            background: var(--cafe-premium);
+            border-bottom: 4px solid var(--dorado);
+            padding: 1.2rem;
+        }
 
-        // 1. Gráfico Semanal (Líneas)
-        new Chart(document.getElementById('graficoSemanales').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: diasLabels,
-                datasets: [{
-                    label: 'Ingresos por Día ($)',
-                    data: diasTotales,
-                    borderColor: colorPrincipal,
-                    backgroundColor: 'rgba(111, 78, 55, 0.08)',
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: true
-                }]
+        .navbar-brand {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 2px;
+            font-size: 1.6rem;
+        }
+
+        .card-stats {
+            border: none;
+            border-radius: 20px;
+            background: #ffffff;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease;
+        }
+
+        .card-stats:hover {
+            transform: translateY(-5px);
+        }
+
+        .icon-circle {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card-grafico {
+            border: none;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.02);
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark mb-5 shadow">
+    <div class="container d-flex flex-wrap align-items-center justify-content-between">
+        <a class="navbar-brand d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none" href="{% url 'index' %}">
+            <img src="{% static 'img/logokenya.png' %}" alt="Logo Kenya Café" style="height: 60px; width: auto; margin-right: 12px;">
+            <span style="font-family: 'Playfair Display', serif; font-weight: bold; letter-spacing: 2px; font-size: 1.6rem;">KENYA CAFFÉ</span>
+        </a>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'index' %}" class="btn btn-sm px-4 text-white rounded-pill border-2 fw-semibold" 
+               style="background-color: var(--dorado); border-color: var(--dorado); transition: 0.2s;">
+                <i class="bi bi-cart4 me-1"></i> Ir al Punto de Venta
+            </a>
+            <a href="/admin/" target="_blank" class="btn btn-sm px-4 text-white rounded-pill border-2" 
+               style="background-color: transparent; border-color: #ffffff; font-weight: 500; opacity: 0.9;">
+                <i class="bi bi-gear-fill me-1"></i> Administrar Catálogo
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-dark"><i class="bi bi-speedometer2 me-2" style="color: var(--cafe-claro);"></i>Panel de Control</h2>
+            <p class="text-muted">Análisis estadístico e indicadores clave de rendimiento.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-stats p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase d-block fw-bold">Ventas de Hoy</span>
+                        <h3 class="fw-bold my-1 text-success">{{ ventas_hoy_formateado }}</h3>
+                        <small class="text-muted">Dato de corte diario</small>
+                    </div>
+                    <div class="icon-circle bg-success-subtle text-success">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-stats p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase d-block fw-bold">Producto Más Vendido</span>
+                        <h3 class="fw-bold my-1 text-primary">{{ producto_top_kpi }}</h3>
+                        <small class="text-muted text-truncate d-inline-block" style="max-width: 150px;">{{ producto_top_subtexto }}</small>
+                    </div>
+                    <div class="icon-circle bg-primary-subtle text-primary">
+                        <i class="bi bi-cup-hot"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-stats p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase d-block fw-bold">Facturación Semanal</span>
+                        <h3 class="fw-bold my-1 text-warning">{{ ventas_semanal_formateado }}</h3>
+                        <small class="text-muted">Acumulado de 7 días</small>
+                    </div>
+                    <div class="icon-circle bg-warning-subtle text-warning">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-stats p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase d-block fw-bold">Estado Inventario</span>
+                        <h3 class="fw-bold my-1 {% if alertas_stock > 0 %}text-danger{% else %}text-info{% endif %}">
+                            {{ estado_inventario }}
+                        </h3>
+                        <small class="text-muted">
+                            {% if alertas_stock > 0 %}{{ alertas_stock }} insumos bajos{% else %}Sin alertas de quiebre{% endif %}
+                        </small>
+                    </div>
+                    <div class="icon-circle {% if alertas_stock > 0 %}bg-danger-subtle text-danger{% else %}bg-info-subtle text-info{% endif %}">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card card-grafico h-100">
+                <h5 class="fw-bold mb-3"><i class="bi bi-cash-stack me-2" style="color: var(--cafe-claro);"></i>Ingresos por Día de la Semana</h5>
+                <div style="position: relative; height:300px;">
+                    <canvas id="graficoSemanas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-grafico h-100">
+                <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2" style="color: var(--cafe-claro);"></i>Top Productos</h5>
+                <div style="position: relative; height:300px;" class="d-flex align-items-center justify-content-center">
+                    <canvas id="graficoProductos"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Inyección de arreglos procesados por Django
+    const diasLabels = {{ dias_labels|safe }};
+    const diasTotales = {{ dias_totales|safe }};
+    const prodLabels = {{ prod_labels|safe }};
+    const prodCantidades = {{ prod_cantidades|safe }};
+
+    // 1. Configuración Gráfico de Líneas (Ingresos reales)
+    const ctxSemana = document.getElementById('graficoSemanas').getContext('2d');
+    new Chart(ctxSemana, {
+        type: 'line',
+        data: {
+            labels: diasLabels,
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: diasTotales,
+                borderColor: '#6f4e37',
+                backgroundColor: 'rgba(111, 78, 55, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.25
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: true, position: 'top' }
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
                 }
             }
-        });
+        }
+    });
 
-        // 2. Gráfico de Productos (Barras Horizontales)
-        new Chart(document.getElementById('graficoProductos').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: prodLabels,
-                datasets: [{
-                    label: 'Unidades Despachadas',
-                    data: prodCantidades,
-                    backgroundColor: [colorPrincipal, colorSecundario, '#bcaaa4', '#eee5de', '#f5f5f5'],
-                    borderRadius: 4
-                }]
-            },
-            options: { 
-                indexAxis: 'y',
-                responsive: true,
-                plugins: {
-                    legend: { display: false } // Ocultar leyenda repetitiva para barras multicolores
-                }
+    // 2. Configuración Gráfico de Rosca/Dona (Top Artículos)
+    const ctxProd = document.getElementById('graficoProductos').getContext('2d');
+    new Chart(ctxProd, {
+        type: 'doughnut',
+        data: {
+            labels: prodLabels,
+            datasets: [{
+                data: prodCantidades,
+                backgroundColor: ['#3d2b1f', '#6f4e37', '#d4a373', '#e6ccb2', '#f3e9dc'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
             }
-        });
-
-        // 3. Gráfico Mensual (Barras Verticales)
-        new Chart(document.getElementById('graficoMensuales').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: mesesLabels,
-                datasets: [{
-                    label: 'Recaudación Mensual ($)',
-                    data: mesesTotales,
-                    backgroundColor: colorSecundario,
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: true, position: 'top' }
-                }
-            }
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>
