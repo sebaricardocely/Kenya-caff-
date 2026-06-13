@@ -56,7 +56,7 @@ def panel_ventas(request):
             if productos_procesados > 0:
                 nueva_venta.total = total_factura
                 nueva_venta.save()
-                messages.success(request, f"🎉 ¡Venta #{nueva_venta.id} guardada con éxito!")
+                messages.success(request, f"🎉 ¡Venta guardada con éxito!")
             else:
                 nueva_venta.delete()
             
