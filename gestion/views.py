@@ -2,18 +2,13 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum, Count
-from django.db.models.functions import ExtractWeekDay
 from django.utils import timezone
 from datetime import timedelta
 from .models import Producto, Venta, DetalleVenta
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
 
-# ==========================================================
-# 1. PANEL DE VENTAS PRINCIPAL (PUNTO DE VENTA)
-# ==========================================================
 def panel_ventas(request):
-    # Traemos productos disponibles
     productos = Producto.objects.filter(disponible=True)
-    # Ordenamos por id descendente para ver las últimas transacciones arriba
     ultimas_ventas = Venta.objects.all().order_by('-id')[:5]
     
     if request.method == "POST":
@@ -26,17 +21,11 @@ def panel_ventas(request):
             
         try:
             carrito_frontend = json.loads(items_json)
-            
             if not carrito_frontend or len(carrito_frontend) == 0:
                 messages.error(request, "No seleccionaste ningún producto.")
                 return redirect('index')
 
-            # Creamos la cabecera de la venta inicialmente en 0
-            nueva_venta = Venta.objects.create(
-                metodo_pago=metodo_pago,
-                total=0
-            )
-            
+            nueva_venta = Venta.objects.create(metodo_pago=metodo_pago, total=0)
             total_factura = 0
             productos_procesados = 0
             
@@ -47,15 +36,12 @@ def panel_ventas(request):
                 try:
                     producto = Producto.objects.get(id=int(producto_id))
                 except (Producto.DoesNotExist, ValueError, TypeError):
-                    messages.error(request, f"El producto con ID {producto_id} no existe en la base de datos.")
                     continue 
                 
-                # Verificar stock antes de descontar
                 if producto.stock >= cantidad:
                     subtotal = producto.precio * cantidad
                     total_factura += subtotal
                     
-                    # Registramos el detalle de la venta
                     DetalleVenta.objects.create(
                         venta=nueva_venta,
                         producto=producto,
@@ -63,27 +49,19 @@ def panel_ventas(request):
                         precio_unitario=producto.precio
                     )
                     
-                    # Descontamos existencias del inventario
                     producto.stock -= cantidad
                     producto.save()
                     productos_procesados += 1
-                else:
-                    messages.error(request, f"¡Alerta! No hay stock suficiente de {producto.nombre} (Disponibles: {producto.stock}).")
             
-            # Si se logró procesar al menos un artículo válido del carrito
             if productos_procesados > 0:
                 nueva_venta.total = total_factura
                 nueva_venta.save()
-                messages.success(request, f"🎉 ¡Venta #{nueva_venta.id} guardada con éxito por ${total_factura:,.0f}!")
+                messages.success(request, f"🎉 ¡Venta #{nueva_venta.id} guardada con éxito!")
             else:
-                # Si ningún producto tenía stock o era válido, eliminamos la cabecera vacía
                 nueva_venta.delete()
-                messages.error(request, "No se pudo procesar la venta porque ningún artículo cumple con los requisitos.")
             
-        except json.JSONDecodeError:
-            messages.error(request, "Hubo un problema al procesar los datos del carrito.")
-        except Exception as e:
-            messages.error(request, f"Error inesperado: {str(e)}")
+        except Exception:
+            messages.error(request, "Hubo un problema al procesar el carrito.")
             
         return redirect('index')
 
@@ -92,90 +70,147 @@ def panel_ventas(request):
         'ultimas_ventas': ultimas_ventas
     })
 
-
-# ==========================================================
-# 2. VISTA DEL DASHBOARD (PROCESAMIENTO ANALÍTICO REAL)
-# ==========================================================
 def dashboard_ventas(request):
-    hoy = timezone.now().date()
-    hace_una_semana = hoy - timedelta(days=6)
+    ahora_local = timezone.localtime(timezone.now())
+    hoy = ahora_local.date()
+    
+    inicio_semana = hoy - timedelta(days=hoy.weekday())
+    inicio_mes = hoy.replace(day=1)
 
-    # ----------------------------------------------------------
-    # A. INGRESOS REALES POR DÍA DE LA SEMANA (Mapeo Cronológico)
-    # ----------------------------------------------------------
-    # ExtractWeekDay extrae el día: 1=Domingo, 2=Lunes, 3=Martes... 7=Sábado
-    ventas_por_dia = (
-        Venta.objects.filter(fecha__date__range=[hace_una_semana, hoy])
-        .annotate(dia_semana=ExtractWeekDay('fecha'))
-        .values('dia_semana')
-        .annotate(total_dia=Sum('total'))
-        .order_by('dia_semana')
+    # --- A. EVOLUCIÓN TEMPORAL DE INGRESOS ---
+    ventas_diarias_query = (
+        Venta.objects.annotate(periodo=TruncDate('fecha'))
+        .values('periodo')
+        .annotate(total_periodo=Sum('total'))
+        .order_by('periodo')[:15]
     )
-    
-    # Mapeo estándar para organizar los gráficos de Lunes a Domingo de manera natural
-    dias_nombre = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-    valores_dias = [0] * 7  # Inicializamos la semana con $0 para cada día
-    
-    for registro in ventas_por_dia:
-        num_django = registro['dia_semana']
-        total = float(registro['total_dia'] or 0)
-        
-        if num_django == 1:  # En Django, 1 es Domingo (Última posición del arreglo)
-            valores_dias[6] = total
-        else:  # Lunes (2) a Sábado (7) se mapean restando 2 al índice del arreglo
-            valores_dias[num_django - 2] = total
+    dia_labels = [v['periodo'].strftime('%d %b') for v in ventas_diarias_query if v['periodo']]
+    dia_valores = [float(v['total_periodo'] or 0) for v in ventas_diarias_query]
 
-    # ----------------------------------------------------------
-    # B. TOP 5 PRODUCTOS MÁS VENDIDOS (Desde DetalleVenta)
-    # ----------------------------------------------------------
+    ventas_semanales_query = (
+        Venta.objects.annotate(periodo=TruncWeek('fecha'))
+        .values('periodo')
+        .annotate(total_periodo=Sum('total'))
+        .order_by('periodo')[:12]
+    )
+    semana_labels = [f"Sem {v['periodo'].strftime('%W (%b)')}" for v in ventas_semanales_query if v['periodo']]
+    semana_valores = [float(v['total_periodo'] or 0) for v in ventas_semanales_query]
+
+    ventas_mensuales_query = (
+        Venta.objects.annotate(periodo=TruncMonth('fecha'))
+        .values('periodo')
+        .annotate(total_periodo=Sum('total'))
+        .order_by('periodo')
+    )
+    bd_mensual = {}
+    for v in ventas_mensuales_query:
+        if v['periodo']:
+            key = v['periodo'].strftime('%Y-%m')
+            bd_mensual[key] = float(v['total_periodo'] or 0)
+    
+    mes_labels, mes_valores = [], []
+    fecha_metrica = hoy - timedelta(days=180)
+    while fecha_metrica <= hoy:
+        key_mes = fecha_metrica.strftime('%Y-%m')
+        label_mes = fecha_metrica.strftime('%b %Y')
+        if label_mes not in mes_labels:
+            mes_labels.append(label_mes)
+            mes_valores.append(bd_mensual.get(key_mes, 0.0))
+        fecha_metrica += timedelta(days=25)
+
+    if not dia_valores: dia_labels, dia_valores = [hoy.strftime('%d %b')], [0]
+    if not semana_valores: semana_labels, semana_valores = ['Sin datos'], [0]
+    if not mes_valores: mes_labels, mes_valores = ['Sin datos'], [0]
+
+    # --- B. MIX GENERAL DE PRODUCTOS ---
     productos_mas_vendidos = (
-        DetalleVenta.objects.filter(venta__fecha__date__range=[hace_una_semana, hoy])
-        .values('producto__nombre')
+        DetalleVenta.objects.values('producto__nombre')
         .annotate(cantidad_total=Sum('cantidad'))
         .order_by('-cantidad_total')[:5]
     )
-    
     prod_labels = [p['producto__nombre'] for p in productos_mas_vendidos]
     prod_cantidades = [int(p['cantidad_total'] or 0) for p in productos_mas_vendidos]
+    if not prod_labels: prod_labels, prod_cantidades = ['Sin ventas'], [0]
 
-    # Respaldo visual en caso de que no existan transacciones aún
-    if not prod_labels:
-        prod_labels = ['Sin ventas']
-        prod_cantidades = [0]
+    # --- C. METRICAS PARA KPIs ---
+    recaudo_dia = Venta.objects.filter(fecha__date=hoy).aggregate(total=Sum('total'))['total'] or 0
+    recaudo_semana = Venta.objects.filter(fecha__date__gte=inicio_semana).aggregate(total=Sum('total'))['total'] or 0
+    recaudo_mes = Venta.objects.filter(fecha__date__gte=inicio_mes).aggregate(total=Sum('total'))['total'] or 0
 
-    # ----------------------------------------------------------
-    # C. CÁLCULO DE INDICADORES REALES (KPIs PARA TARJETAS)
-    # ----------------------------------------------------------
-    # 1. Ventas de Hoy (Filtro por fecha actual)
-    ventas_hoy_query = Venta.objects.filter(fecha__date=hoy).aggregate(total=Sum('total'))
-    ventas_hoy = ventas_hoy_query['total'] if ventas_hoy_query['total'] else 0
+    top_tres_mes = (
+        DetalleVenta.objects.filter(venta__fecha__date__gte=inicio_mes)
+        .values('producto__nombre')
+        .annotate(total_cant=Sum('cantidad'))
+        .order_by('-total_cant')[:3]
+    )
+    lista_top_productos = []
+    for i, p in enumerate(top_tres_mes, 1):
+        lista_top_productos.append({
+            'puesto': i,
+            'nombre': p['producto__nombre'],
+            'unidades': p['total_cant']
+        })
 
-    # 2. Facturación Semanal (Suma acumulada real de los últimos 7 días)
-    ventas_semanal = sum(valores_dias)
-
-    # 3. Estado de Inventario (Alerta si hay algún producto con stock crítico <= 5 unidades)
-    productos_criticos = Producto.objects.filter(stock__lte=5).count()
+    productos_bajo_stock = Producto.objects.filter(stock__lte=5).order_by('stock')
+    productos_criticos = productos_bajo_stock.count()
     estado_inventario = "Alerta" if productos_criticos > 0 else "Óptimo"
 
-    # 4. Datos del Producto Líder para los textos informativos
-    producto_lider = prod_labels[0] if productos_mas_vendidos else "Ninguno"
-    unidades_lider = prod_cantidades[0] if productos_mas_vendidos else 0
+    if productos_criticos > 0:
+        lineas_tooltip = [f"• {p.nombre} ({p.stock} ud)" for p in productos_bajo_stock]
+        tooltip_inventario = "<br>".join(lineas_tooltip)
+    else:
+        tooltip_inventario = "Todos los niveles de stock están estables."
 
-    # ----------------------------------------------------------
-    # D. ESTRUCTURACIÓN DEL CONTEXTO UNIFICADO
-    # ----------------------------------------------------------
+    # --- D. HISTORIAL MAESTRO COMO DICCIONARIO INDEXADO ---
+    ventas_db = Venta.objects.all().order_by('-id')
+    total_tickets_conteo = ventas_db.count()
+    
+    # Lista limpia para iterar de corrido en la tabla de HTML
+    historial_lista_html = []
+    # Diccionario indexado por ID para JavaScript
+    historial_dict_js = {}
+    
+    for v in ventas_db:
+        fecha_local = timezone.localtime(v.fecha)
+        detalles = DetalleVenta.objects.filter(venta=v).select_related('producto')
+        articulos_lista = []
+        for d in detalles:
+            if d.producto:
+                articulos_lista.append({
+                    'nombre': d.producto.nombre,
+                    'cantidad': d.cantidad
+                })
+        
+        ticket_data = {
+            'id': v.id,
+            'fecha': fecha_local.isoformat(),
+            'metodo_pago': v.metodo_pago,
+            'total': float(v.total),
+            'articulos': articulos_lista
+        }
+        
+        historial_lista_html.append(ticket_data)
+        historial_dict_js[str(v.id)] = ticket_data # Indexamos por ID de venta
+
     contexto = {
-        # Strings listos y formateados para las tarjetas superiores
-        'ventas_hoy_formateado': f"$ {ventas_hoy:,.0f}",
-        'ventas_semanal_formateado': f"$ {ventas_semanal:,.0f}" if ventas_semanal < 1000000 else f"$ {ventas_semanal/1000000:.2f}M",
-        'producto_top_kpi': f"{unidades_lider} Unidades",
-        'producto_top_subtexto': f"{producto_lider} lidera",
+        'recaudo_dia_formateado': f"$ {recaudo_dia:,.0f}",
+        'top_productos_mes': lista_top_productos,
+        'mes_actual_nombre': ahora_local.strftime('%B').capitalize(),
+        'recaudo_semana_formateado': f"$ {recaudo_semana:,.0f}",
+        'recaudo_mes_formateado': f"$ {recaudo_mes:,.0f}",
         'estado_inventario': estado_inventario,
         'alertas_stock': productos_criticos,
+        'tooltip_inventario': tooltip_inventario,
+        
+        'historial_tickets': historial_lista_html,
+        'total_tickets_conteo': total_tickets_conteo,
+        'historial_dict_json': historial_dict_js, # Enviado al tag json_script
 
-        # Datos nativos serializados para los scripts de Chart.js
-        'dias_labels': dias_nombre,
-        'dias_totales': valores_dias,
+        'data_graficos_json': json.dumps({
+            'diario': {'labels': dia_labels, 'valores': dia_valores},
+            'semanal': {'labels': semana_labels, 'valores': semana_valores},
+            'mensual': {'labels': mes_labels, 'valores': mes_valores},
+        }),
         'prod_labels': prod_labels,
         'prod_cantidades': prod_cantidades,
     }
