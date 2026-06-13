@@ -19,7 +19,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+rjrxh5_pgrit@gav4aw^)pmvun44e5f449ke3q3gkzjl_ctoo'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Se pone automáticamente en False en Render, pero en tu PC local será True
+DEBUG = 'RENDER' not in os.environ
 
 # Permitir el dominio dinámico de Render y entornos locales de desarrollo
 ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
